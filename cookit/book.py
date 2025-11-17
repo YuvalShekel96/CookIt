@@ -28,6 +28,9 @@ class Book:
         """
         self.name = name
         self.dishes = dishes if dishes is not None else []
+        self.all_labels = set()
+        for dish in self.dishes:
+            self.all_labels.update(dish.labels)
     
     def add_dish(self, dish: Dish) -> None:
         """
@@ -37,6 +40,7 @@ class Book:
             dish: Dish to add
         """
         self.dishes.append(dish)
+        self.all_labels.update(dish.labels)
     
     def remove_dish(self, dish: Dish) -> bool:
         """
@@ -85,10 +89,47 @@ class Book:
             all_ingredients.extend(dish.ingredients)
         return all_ingredients
     
+    def get_all_labels(self) -> List[str]:
+        """
+        Get all unique labels from all dishes in the book.
+        """
+        return list(self.all_labels)
+    
     def __repr__(self) -> str:
         """String representation of the book."""
         return f"Book({self.name}, {len(self.dishes)} dishes)"
     
+    def get_dish_by_name_regex(self, regex: str) -> List[Dish]:
+        """
+        Get all dishes that match the regex.
+        
+        Args:
+            regex: Regex to match
+        """
+        return [dish for dish in self.dishes if regex in dish.name]
+
+    def get_dish_by_label(self, labels: List[str]) -> List[Dish]:
+        """
+        Get all dishes that have any of the requested labels (no duplicates).
+        
+        Args:
+            labels: List of labels to match
+        """
+        matched = []
+        seen = set()
+        label_set = set(labels)
+        for dish in self.dishes:
+            if label_set.intersection(getattr(dish, "labels", [])):
+                if dish not in seen:
+                    matched.append(dish)
+                    seen.add(dish)
+        return matched
+
+        """
+        Sort dishes by name.
+        """
+        return sorted(self.dishes, key=lambda x: x.name)
+
     def to_dict(self) -> dict:
         """
         Convert book to dictionary for JSON serialization.

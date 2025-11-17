@@ -12,6 +12,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from cookit import Book, Dish, Ingredient, ShoppingList, Supermarket
+from cookit.enums import MeasurementUnit
 from cookit.storage import (
     save_book,
     load_book,
@@ -29,6 +30,8 @@ st.set_page_config(
     page_icon="🍳",
     layout="wide",
 )
+
+MEASUREMENT_OPTIONS = MeasurementUnit.choices()
 
 
 def initialize_session_state():
@@ -56,36 +59,6 @@ def home_page():
     st.title("🍳 CookIT - Recipe Book")
     st.markdown("---")
     
-    book = st.session_state.book
-    
-    if not book.dishes:
-        st.info("No dishes in your recipe book yet. Click 'Add Dish' to get started!")
-    else:
-        st.subheader("Your Dishes")
-        
-        # Display dishes in columns
-        cols = st.columns(3)
-        for idx, dish in enumerate(book.dishes):
-            col = cols[idx % 3]
-            with col:
-                with st.container():
-                    st.markdown(f"### {dish.name}")
-                    if dish.type:
-                        st.caption(f"Type: {dish.type}")
-                    if dish.labels:
-                        st.caption(f"Labels: {', '.join(dish.labels)}")
-                    st.caption(f"{len(dish.ingredients)} ingredients")
-                    
-                    if st.button("Open Dish", key=f"open_{idx}"):
-                        st.session_state.page = "Dish"
-                        st.session_state.selected_dish_idx = idx
-                    
-                    if st.button("Add to Shopping List", key=f"add_to_list_{idx}"):
-                        st.session_state.current_shopping_list.add_dish(dish)
-                        st.success(f"Added {dish.name} to shopping list!")
-    
-    st.markdown("---")
-    
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("➕ Add Dish", use_container_width=True):
@@ -96,26 +69,107 @@ def home_page():
     with col3:
         if st.button("💰 Compare Prices", use_container_width=True):
             st.session_state.page = "Compare Prices"
+    
+    st.markdown("---")
+
+    book = st.session_state.book
+    
+    
+    if not book.dishes:
+        st.info("No dishes in your recipe book yet. Click 'Add Dish' to get started!")
+    else:
+        st.subheader("Your Dishes")
+        # INSERT_YOUR_CODE
+
+        # Filter/search section
+        filter_col1, filter_col2 = st.columns([2, 2])
+
+        with filter_col1:
+            search_text = st.text_input("🔎 Search by name", value=st.session_state.get("search_text", ""), key="search_text")
+        with filter_col2:
+            all_labels = book.get_all_labels() if hasattr(book, "get_all_labels") else []
+            selected_labels = st.multiselect(
+                "🏷️ Filter by labels", 
+                options=sorted(all_labels), 
+                default=st.session_state.get("selected_labels", []),
+                key="selected_labels"
+            )
+
+        filtered_dishes = book.dishes
+
+        # If label filters
+        if selected_labels:
+            filtered_dishes = book.get_dish_by_label(selected_labels)
+
+        # If search box; search within filtered_by_label dishes
+        if search_text:
+            # Only retain those matching the search in the filtered list
+            # book.get_dish_by_name_regex returns all dishes matching regex, so intersect with already label-filtered
+            name_matches = set(book.get_dish_by_name_regex(search_text))
+            filtered_dishes = [dish for dish in filtered_dishes if dish in name_matches]
+
+        # Always show dishes sorted by name (display only)
+        sorted_dishes = sorted(filtered_dishes, key=lambda d: d.name.lower())
+        # Display dishes in columns
+        cols = st.columns(3)
+        for idx, dish in enumerate(sorted_dishes):
+            col = cols[idx % 3]
+            with col:
+                with st.container():
+                    st.markdown(f"### {dish.name}")
+                    if dish.type:
+                        st.caption(f"Type: {dish.type}")
+                    if dish.labels:
+                        st.caption(f"Labels: {', '.join(dish.labels)}")
+                    st.caption(f"{len(dish.ingredients)} ingredients")
+                    
+                    # idx here is display index; we map to real index for action-based buttons
+                    real_idx = book.dishes.index(dish)
+                    
+                    if st.button("Open Dish", key=f"open_{idx}"):
+                        st.session_state.page = "Dish"
+                        st.session_state.selected_dish_idx = real_idx
+                    
+                    if st.button("Add to Shopping List", key=f"add_to_list_{idx}"):
+                        st.session_state.current_shopping_list.add_dish(dish)
+                        st.success(f"Added {dish.name} to shopping list!")
 
 
 def dish_page():
     """Display a dish page with editable fields."""
     st.title("📝 Dish Details")
-    
+
+    # Place the buttons at the very top of the page using st.columns, right after the title
+    top_col1, top_col2 = st.columns(2)
     book = st.session_state.book
     dish_idx = st.session_state.get("selected_dish_idx", 0)
-    
+
+    # If not found, don't reference dish
     if dish_idx >= len(book.dishes):
         st.error("Dish not found")
-        if st.button("Back to Home"):
-            st.session_state.page = "Home"
+        with top_col2:
+            if st.button("🏠 Back to Home", key="back_to_home_top"):
+                st.session_state.page = "Home"
+                st.rerun()
         return
-    
+
     dish = book.dishes[dish_idx]
-    
+
+    with top_col1:
+        if st.button("🏠 Back to Home", key="back_to_home_top"):
+            st.session_state.page = "Home"
+            st.rerun()
+    with top_col2:
+        if st.button("🛒 Add to Shopping List", key="add_to_shopping_list_top"):
+            st.session_state.current_shopping_list.add_dish(dish)
+            st.success(f"Added {dish.name} to shopping list!")
+
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+
     # Editable fields
     col1, col2 = st.columns(2)
-    
+
     with col1:
         new_name = st.text_input("Dish Name", value=dish.name, key="dish_name")
         new_type = st.text_input("Type", value=dish.type or "", key="dish_type")
@@ -124,7 +178,7 @@ def dish_page():
             value=", ".join(dish.labels),
             key="dish_labels",
         )
-    
+
     with col2:
         if st.button("💾 Save Changes"):
             dish.name = new_name
@@ -132,18 +186,18 @@ def dish_page():
             dish.labels = [l.strip() for l in new_labels.split(",") if l.strip()]
             save_book(book)
             st.success("Dish saved!")
-        
+
         if st.button("🗑️ Delete Dish"):
             book.remove_dish(dish)
             save_book(book)
             st.session_state.page = "Home"
             st.rerun()
-    
+
     st.markdown("---")
-    
+
     # Ingredients section
     st.subheader("Ingredients")
-    
+
     for i, ingredient in enumerate(dish.ingredients):
         col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
         with col1:
@@ -160,7 +214,7 @@ def dish_page():
                 dish.remove_ingredient(ingredient)
                 save_book(book)
                 st.rerun()
-    
+
     # Add ingredient form
     with st.expander("➕ Add Ingredient"):
         col1, col2, col3 = st.columns(3)
@@ -169,19 +223,23 @@ def dish_page():
         with col2:
             ing_quantity = st.number_input("Quantity", min_value=0, key="new_ing_qty")
         with col3:
-            ing_unit = st.text_input("Unit (g, ml, pcs, etc.)", key="new_ing_unit")
+            ing_unit = st.selectbox(
+                "Unit",
+                options=MEASUREMENT_OPTIONS,
+                key="new_ing_unit_select",
+            )
         
         if st.button("Add Ingredient"):
-            if ing_name and ing_unit:
+            if ing_name:
                 new_ingredient = Ingredient(ing_name, ing_quantity, ing_unit)
                 dish.add_ingredient(new_ingredient)
                 save_book(book)
                 st.rerun()
-    
+
     # Steps section
     st.markdown("---")
     st.subheader("Cooking Steps")
-    
+
     for i, step in enumerate(dish.steps):
         col1, col2 = st.columns([10, 1])
         with col1:
@@ -191,7 +249,7 @@ def dish_page():
                 dish.steps.pop(i)
                 save_book(book)
                 st.rerun()
-    
+
     # Add step form
     new_step = st.text_area("Add Step", key="new_step")
     if st.button("Add Step"):
@@ -199,18 +257,8 @@ def dish_page():
             dish.steps.append(new_step.strip())
             save_book(book)
             st.rerun()
-    
+
     st.markdown("---")
-    
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🛒 Add to Shopping List"):
-            st.session_state.current_shopping_list.add_dish(dish)
-            st.success(f"Added {dish.name} to shopping list!")
-    with col2:
-        if st.button("🏠 Back to Home"):
-            st.session_state.page = "Home"
-            st.rerun()
 
 
 def add_dish_page():
@@ -245,15 +293,19 @@ def add_dish_page():
         with col2:
             ing_quantity = st.number_input("Quantity", min_value=0, key="new_ing_qty")
         with col3:
-            ing_unit = st.text_input("Unit (g, ml, pcs, etc.)", key="new_ing_unit")
+            ing_unit = st.selectbox(
+                "Unit",
+                options=MEASUREMENT_OPTIONS,
+                key="new_ing_unit_add_dish",
+            )
         
         if st.button("Add Ingredient"):
-            if ing_name and ing_unit:
+            if ing_name:
                 new_ingredient = Ingredient(ing_name, ing_quantity, ing_unit)
                 st.session_state.temp_ingredients.append(new_ingredient)
                 st.rerun()
             else:
-                st.warning("Please enter both name and unit")
+                st.warning("Please enter a name for the ingredient")
     
     st.markdown("---")
     
