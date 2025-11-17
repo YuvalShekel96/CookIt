@@ -7,7 +7,8 @@ A local recipe book app that generates shopping lists, checks supermarket prices
 - 📖 **Recipe Book Management**: Create and manage your recipe collection
 - 🛒 **Shopping Lists**: Automatically generate shopping lists from recipes with quantity merging
 - 💰 **Price Comparison**: Compare prices across multiple supermarkets
-- 💾 **Local Storage**: All data stored locally in JSON format
+- 💾 **Per-User Local Storage**: Each user has isolated books and shopping lists
+- 🔐 **Local Authentication**: Username/password login with hashed credentials
 
 ## Installation
 
@@ -32,21 +33,26 @@ The application will open in your browser at `http://localhost:8501`
 
 ### Using the Application
 
-1. **Home Page**: View all your dishes, add new dishes, or create shopping lists
-2. **Dish Page**: View and edit dish details, ingredients, and cooking steps
-3. **Shopping List Page**: View your shopping list, see total costs, and save/load lists
-4. **Compare Prices Page**: Compare prices across different supermarkets
+1. **Login Page**: Register a username and password or log in to an existing account
+2. **Home Page**: View all your dishes, add new dishes, or create shopping lists
+3. **Dish Page**: View and edit dish details, ingredients, and cooking steps
+4. **Shopping List Page**: View your shopping list, see total costs, and save/load lists
+5. **Compare Prices Page**: Compare prices across different supermarkets
+6. **Settings Page**: Update delivery address and preferred supermarkets per user
 
 ### Programmatic Usage
 
 You can also use the CookIT classes programmatically:
 
 ```python
-from cookit import Book, Dish, Ingredient, ShoppingList, Supermarket
-from cookit.storage import save_book, load_book
+from cookit import Dish, Ingredient, Supermarket
+from cookit.storage import save_user_book, load_user_book, load_user_shopping_list
 
-# Create a recipe book
-book = Book("My Recipes")
+# Use a username to scope data
+username = "demo_user"
+
+# Load or create a recipe book for this user
+book = load_user_book(username)
 
 # Create a dish
 pasta = Dish("Spaghetti Carbonara")
@@ -56,11 +62,11 @@ pasta.add_ingredient(Ingredient("Eggs", 3.0, "pcs"))
 # Add dish to book
 book.add_dish(pasta)
 
-# Save the book
-save_book(book)
+# Save the book for this user
+save_user_book(username, book)
 
 # Create a shopping list
-shopping_list = ShoppingList()
+shopping_list = load_user_shopping_list(username)
 shopping_list.add_dish(pasta)
 
 # Create a supermarket
@@ -84,16 +90,21 @@ CookIT/
 │   ├── book.py          # Book class
 │   ├── shopping_list.py # ShoppingList class
 │   ├── supermarket.py   # Supermarket class
+│   ├── enums.py         # Shared enums
+│   ├── auth.py          # Local authentication helpers
 │   └── storage.py       # JSON persistence
 ├── ui/                  # Streamlit UI
-│   └── app.py           # Main UI application
+│   ├── app.py           # Main UI application
+│   └── pages/
+│       └── Login.py     # Login/Register page
 ├── tests/               # Unit tests
 │   ├── test_ingredient.py
 │   ├── test_dish.py
 │   ├── test_book.py
 │   ├── test_shopping_list.py
 │   ├── test_supermarket.py
-│   └── test_storage.py
+│   ├── test_storage.py
+│   └── test_auth.py
 ├── db/                  # JSON data storage (created automatically)
 ├── requirements.txt     # Python dependencies
 └── README.md           # This file
@@ -113,12 +124,14 @@ Or use unittest:
 python -m unittest discover tests
 ```
 
-## Data Storage
+## Authentication & Data Storage
 
-All data is stored in the `db/` directory as JSON files:
-- `book.json` - Recipe book data
-- `supermarkets.json` - Supermarket configurations
-- `shopping_list_*.json` - Saved shopping lists
+- User accounts live in `db/users.json` (passwords stored as SHA256 hashes).
+- Each user’s data is isolated under `db/users/<username>_*.json`.
+  - `*_book.json` – recipe book
+  - `*_shopping_list.json` – current shopping list
+  - `*_shopping_list_<name>.json` – saved lists
+- Global data such as supermarkets remains under `db/`.
 
 ## Development
 

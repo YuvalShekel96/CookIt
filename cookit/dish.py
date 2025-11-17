@@ -15,7 +15,6 @@ class Dish:
     Attributes:
         name: Name of the dish
         ingredients: List of ingredients required
-        type: Optional dish type (e.g., "Main Course", "Dessert")
         labels: List of labels/tags (e.g., ["vegetarian", "quick"])
         steps: List of cooking steps
     """
@@ -24,7 +23,6 @@ class Dish:
         self,
         name: str,
         ingredients: Optional[List[Ingredient]] = None,
-        dish_type: Optional[str] = None,
         labels: Optional[List[str]] = None,
         steps: Optional[List[str]] = None,
     ):
@@ -34,13 +32,11 @@ class Dish:
         Args:
             name: Name of the dish
             ingredients: Optional list of ingredients
-            dish_type: Optional dish type
             labels: Optional list of labels
             steps: Optional list of cooking steps
         """
         self.name = name
         self.ingredients = ingredients if ingredients is not None else []
-        self.type = dish_type
         self.labels = labels if labels is not None else []
         self.steps = steps if steps is not None else []
     
@@ -83,7 +79,6 @@ class Dish:
         return {
             "name": self.name,
             "ingredients": [ing.to_dict() for ing in self.ingredients],
-            "type": self.type,
             "labels": self.labels,
             "steps": self.steps,
         }
@@ -105,7 +100,6 @@ class Dish:
         return cls(
             name=data["name"],
             ingredients=ingredients,
-            dish_type=data.get("type"),
             labels=data.get("labels", []),
             steps=data.get("steps", []),
         )

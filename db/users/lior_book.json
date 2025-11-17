@@ -1,0 +1,19 @@
+{
+  "name": "Lior's Book",
+  "dishes": [
+    {
+      "name": "Test",
+      "ingredients": [
+        {
+          "name": "Tofu",
+          "units_required": 1,
+          "unit_type": "pcs",
+          "price_per_unit": null,
+          "source_supermarket": null
+        }
+      ],
+      "labels": [],
+      "steps": []
+    }
+  ]
+}

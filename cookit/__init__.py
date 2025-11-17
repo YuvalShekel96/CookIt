@@ -11,6 +11,7 @@ from cookit.book import Book
 from cookit.shopping_list import ShoppingList
 from cookit.supermarket import Supermarket
 from cookit.enums import MeasurementUnit
+from cookit.auth import User
 
 __all__ = [
     "Ingredient",
@@ -19,5 +20,6 @@ __all__ = [
     "ShoppingList",
     "Supermarket",
     "MeasurementUnit",
+    "User",
 ]
 
