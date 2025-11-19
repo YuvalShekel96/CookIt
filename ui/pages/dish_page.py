@@ -36,6 +36,11 @@ def render_dish_page() -> None:
     with top_col2:
         if st.button("🛒 Add to Shopping List", key="add_to_shopping_list_top"):
             st.session_state.current_shopping_list.add_dish(dish)
+            # Track dish in shopping list dishes
+            if "shopping_list_dishes" not in st.session_state:
+                st.session_state.shopping_list_dishes = []
+            if dish not in st.session_state.shopping_list_dishes:
+                st.session_state.shopping_list_dishes.append(dish)
             save_user_shopping_list(username, st.session_state.current_shopping_list)
             st.success(f"Added {dish.name} to shopping list!")
 

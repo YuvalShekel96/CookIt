@@ -28,7 +28,7 @@ def render_home_page() -> None:
         if st.button("➕ Add Dish", use_container_width=True):
             st.session_state.page = "Add Dish"
     with col2:
-        if st.button("🛒 Create Shopping List", use_container_width=True):
+        if st.button("🛒 Go To Shopping List", use_container_width=True):
             st.session_state.page = "Shopping List"
     with col3:
         if st.button("💰 Compare Prices", use_container_width=True):
@@ -92,6 +92,10 @@ def render_home_page() -> None:
 
                 if st.button("Add to Shopping List", key=f"add_to_list_{idx}"):
                     st.session_state.current_shopping_list.add_dish(dish)
+                    # Track dish in shopping list dishes
+                    if "shopping_list_dishes" not in st.session_state:
+                        st.session_state.shopping_list_dishes = []
+                    st.session_state.shopping_list_dishes.append(dish)
                     st.success(f"Added {dish.name} to shopping list!")
                     save_user_shopping_list(username, st.session_state.current_shopping_list)
 

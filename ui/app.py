@@ -56,6 +56,9 @@ def initialize_session_state() -> None:
 
     if "current_shopping_list" not in st.session_state:
         st.session_state.current_shopping_list = load_user_shopping_list(username)
+    
+    if "shopping_list_dishes" not in st.session_state:
+        st.session_state.shopping_list_dishes = []
 
 
 def main():

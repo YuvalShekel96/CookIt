@@ -15,7 +15,6 @@ class TestDish(unittest.TestCase):
         dish = Dish("Pasta")
         self.assertEqual(dish.name, "Pasta")
         self.assertEqual(len(dish.ingredients), 0)
-        self.assertIsNone(dish.type)
         self.assertEqual(len(dish.labels), 0)
         self.assertEqual(len(dish.steps), 0)
     
@@ -25,13 +24,11 @@ class TestDish(unittest.TestCase):
         dish = Dish(
             "Spaghetti",
             ingredients=ingredients,
-            dish_type="Main Course",
             labels=["Italian", "Quick"],
             steps=["Boil water", "Cook pasta"]
         )
         self.assertEqual(dish.name, "Spaghetti")
         self.assertEqual(len(dish.ingredients), 1)
-        self.assertEqual(dish.type, "Main Course")
         self.assertEqual(len(dish.labels), 2)
         self.assertEqual(len(dish.steps), 2)
     
@@ -60,7 +57,6 @@ class TestDish(unittest.TestCase):
         dish = Dish(
             "Pizza",
             ingredients=[Ingredient("Flour", 500.0, "g")],
-            dish_type="Main Course",
             labels=["Italian"],
             steps=["Make dough", "Add toppings"]
         )
@@ -68,7 +64,6 @@ class TestDish(unittest.TestCase):
         
         dish2 = Dish.from_dict(data)
         self.assertEqual(dish.name, dish2.name)
-        self.assertEqual(dish.type, dish2.type)
         self.assertEqual(dish.labels, dish2.labels)
         self.assertEqual(dish.steps, dish2.steps)
         self.assertEqual(len(dish.ingredients), len(dish2.ingredients))
